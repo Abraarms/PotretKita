@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#fbf7f2"><meta name="description" content="Ruang kecil untuk menyimpan cerita dan foto kalian berdua.">
+  <title>Ruang Kita — album berdua</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="#"><span class="brand-mark">♡</span><span>ruang<span class="brand-light">kita</span></span></a><div class="top-right"><span class="secure"><i></i> Album privat</span><button id="logout" class="quiet hidden">Keluar</button></div></header>
+  <main>
+    <section id="login-view" class="login-layout">
+      <div class="login-copy"><div class="eyebrow"><span>UNTUK KITA BERDUA</span><span class="tiny-heart">♥</span></div><h1>Kenangan kecil,<br><em>disimpan selamanya.</em></h1><p class="intro">Satu ruang hangat untuk foto, perjalanan, dan hal-hal sederhana yang ingin kita ingat.</p><div class="memory-card"><div class="memory-photo"><span class="sun">☼</span><span class="hill hill-back"></span><span class="hill hill-front"></span><span class="couple">♡</span><span class="photo-caption">somewhere, together</span></div><div class="memory-note"><span class="note-heart">♥</span><span>Setiap foto menyimpan<br>cerita yang cuma kita tahu.</span></div></div></div>
+      <div class="login-panel"><div class="panel-icon">✳</div><h2>Masuk ke ruang kita</h2><p class="panel-sub">Gunakan akun yang sudah dibuat di Supabase.</p><form id="login-form"><label for="email">Email</label><input id="email" type="email" placeholder="nama@email.com" autocomplete="username" required><label for="password">Kata sandi</label><input id="password" type="password" placeholder="Masukkan kata sandi" autocomplete="current-password" required><button class="primary full" type="submit">Masuk ke album <span>↗</span></button><p id="login-message" class="message"></p></form><div class="panel-foot"><span class="lock">♧</span> Hanya akun yang diizinkan bisa melihat foto.</div></div>
+    </section>
+    <section id="gallery-view" class="gallery-view hidden"><div class="welcome-row"><div><div class="eyebrow">ALBUM KITA <span class="tiny-heart">♥</span></div><h1>Hai, <em>LOVEE.</em></h1><p class="intro">Simpan momen yang ingin terus kita kenang.</p></div><button id="upload-trigger" class="primary">＋ Tambah foto</button></div><div class="toolbar"><div class="count"><span class="count-dot"></span><strong id="photo-count">0 foto</strong><span>tersimpan bersama</span></div><div class="sort-label">MOMEN TERBARU <span>⌄</span></div></div><div id="gallery" class="gallery-grid"></div><div id="empty" class="empty-state hidden"><div class="empty-icon">♡</div><h2>Album kita masih kosong</h2><p>Mulai dengan mengunggah foto pertama yang ingin disimpan berdua.</p><button class="outline" id="empty-upload">Pilih foto pertama</button></div><div id="status" class="status"></div></section>
+  </main>
+  <footer><span>dibuat untuk cerita kita <b>♥</b></span><span>RUANG KITA · PRIVAT</span></footer>
+  <input id="file-input" type="file" accept="image/*" multiple hidden>
+  <div id="lightbox" class="lightbox hidden"><button id="lightbox-close" aria-label="Tutup">×</button><img id="lightbox-img" alt="Foto kenangan"><div id="lightbox-caption"></div></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="app.js"></script>
+</body></html>
