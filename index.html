@@ -3,7 +3,13 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#fbf7f2"><meta name="description" content="Ruang kecil untuk menyimpan cerita dan foto kalian berdua.">
-  <title>Ruang Kita — album berdua</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css">
+  <title>Ruang Kita — album berdua</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css?v=3">
+  <style>
+    #lightbox-prev,#lightbox-next{position:fixed!important;top:50vh!important;transform:translateY(-50%)!important;z-index:30!important;margin:0!important}
+    #lightbox-prev{left:24px!important;right:auto!important}
+    #lightbox-next{right:24px!important;left:auto!important}
+    @media(max-width:600px){#lightbox-prev{left:10px!important}#lightbox-next{right:10px!important}}
+  </style>
 </head>
 <body>
   <header class="topbar"><a class="brand" href="#"><span class="brand-mark">♡</span><span>ruang<span class="brand-light">kita</span></span></a><div class="top-right"><span class="secure"><i></i> Album privat</span><button id="logout" class="quiet hidden">Keluar</button></div></header>
