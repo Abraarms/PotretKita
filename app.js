@@ -6,7 +6,7 @@
   const loginView = $("login-view"), galleryView = $("gallery-view"), gallery = $("gallery");
   document.querySelectorAll("button:not([type])").forEach(button => { button.type = "button"; });
   document.querySelector(".brand")?.addEventListener("click", event => event.preventDefault());
-  let allPhotos = [], visiblePhotos = [], favoritesOnly = false, activePhoto = null, activeIndex = 0, slideTimer = null, slidePlaying = false, photoRequestId = 0;
+  let allPhotos = [], visiblePhotos = [], selectedPaths = new Set(), selectionMode = false, favoritesOnly = false, activePhoto = null, activeIndex = 0, slideTimer = null, slidePlaying = false, photoRequestId = 0;
   const signedUrlCache = new Map();
   const pendingSignedUrls = new Map();
   let signedUrlBatchScheduled = false;
@@ -16,6 +16,8 @@
   const revealObserver = "IntersectionObserver" in window ? new IntersectionObserver(entries => { for (const entry of entries) { if (entry.isIntersecting) { entry.target.classList.add("is-visible"); revealObserver.unobserve(entry.target); } } }, { threshold: .08, rootMargin: "0px 0px -35px 0px" }) : null;
   function notice(text, error = false) { const el = $("status"); el.textContent = text; el.className = `status ${text ? "show" : ""} ${error ? "error" : ""}`; }
   function loginNotice(text, error = false) { $("login-message").textContent = text; $("login-message").className = `message ${error ? "error" : ""}`; }
+  function updateSelectionUI() { $("selection-toggle").textContent = selectionMode ? "Selesai memilih" : "Pilih foto"; $("selection-toggle").classList.toggle("active", selectionMode); $("selection-actions").classList.toggle("hidden", !selectionMode); $("selected-count").textContent = `${selectedPaths.size} dipilih`; $("delete-selected").textContent = `Hapus terpilih (${selectedPaths.size})`; $("delete-selected").disabled = selectedPaths.size === 0; const allSelected = visiblePhotos.length > 0 && visiblePhotos.every(photo => selectedPaths.has(photo.path)); $("select-visible").textContent = allSelected ? "Lepas pilihan tampil" : "Pilih semua tampil"; }
+  function toggleSelected(path) { selectedPaths.has(path) ? selectedPaths.delete(path) : selectedPaths.add(path); renderPhotos(); updateSelectionUI(); }
   function showSession(session) { const logged = Boolean(session); loginView.classList.toggle("hidden", logged); galleryView.classList.toggle("hidden", !logged); $("logout").classList.toggle("hidden", !logged); if (logged) loadPhotos(); }
   if (!client) loginNotice("Situs belum tersambung. Periksa URL dan publishable key Supabase di index.html.", true);
   else client.auth.getSession().then(({ data }) => showSession(data.session));
@@ -25,6 +27,10 @@
   $("search-input").addEventListener("input", renderPhotos); $("sort-select").addEventListener("change", renderPhotos); $("month-filter").addEventListener("change", renderPhotos);
   $("slideshow-trigger").addEventListener("click", () => { renderPhotos(); if (visiblePhotos.length) openAt(0, true); });
   $("favorites-filter").addEventListener("click", () => { favoritesOnly = !favoritesOnly; $("favorites-filter").classList.toggle("active", favoritesOnly); $("favorites-filter").textContent = favoritesOnly ? "♥ Favorit saja · aktif" : "♡ Favorit saja"; renderPhotos(); });
+  $("selection-toggle").addEventListener("click", () => { selectionMode = !selectionMode; if (!selectionMode) selectedPaths.clear(); renderPhotos(); updateSelectionUI(); });
+  $("selection-cancel").addEventListener("click", () => { selectionMode = false; selectedPaths.clear(); renderPhotos(); updateSelectionUI(); });
+  $("select-visible").addEventListener("click", () => { const allSelected = visiblePhotos.length > 0 && visiblePhotos.every(photo => selectedPaths.has(photo.path)); for (const photo of visiblePhotos) allSelected ? selectedPaths.delete(photo.path) : selectedPaths.add(photo.path); renderPhotos(); updateSelectionUI(); });
+  $("delete-selected").addEventListener("click", () => { const paths = [...selectedPaths]; if (!paths.length) return; showDialog({ title: `Hapus ${paths.length} foto?`, description: "Foto dan thumbnail yang dipilih akan dihapus permanen dari album.", label: "Ketik HAPUS untuk melanjutkan", confirm: `Hapus ${paths.length} foto`, destructive: true, onConfirm: value => deleteMany(paths, value) }); });
   const coverInput = $("cover-input");
   function showCover(dataUrl) { $("cover-image").src = dataUrl; $("cover-image").classList.remove("hidden"); $("memory-photo").classList.add("has-cover"); $("cover-remove").classList.remove("hidden"); }
   try { const savedCover = localStorage.getItem("ruangKitaCover"); if (savedCover) showCover(savedCover); } catch { /* Browser storage may be unavailable; cover can still be previewed for this session. */ }
@@ -57,9 +63,10 @@
     let photos = allPhotos.filter(p => (!favoritesOnly || p.favorite) && (!query || `${p.file.name} ${p.caption}`.toLocaleLowerCase("id").includes(query)) && ($("month-filter").value === "all" || p.file.created_at?.slice(0,7) === $("month-filter").value));
     const sort = $("sort-select").value;
     if (sort === "oldest") photos.reverse(); else if (sort === "name") photos.sort((a,b) => a.file.name.localeCompare(b.file.name)); else if (sort === "favorites") photos.sort((a,b) => Number(b.favorite)-Number(a.favorite));
-    visiblePhotos = photos; $("no-results").classList.toggle("hidden", photos.length > 0 || allPhotos.length === 0);
+    visiblePhotos = photos; for (const path of [...selectedPaths]) if (!allPhotos.some(item => item.path === path)) selectedPaths.delete(path); updateSelectionUI(); $("no-results").classList.toggle("hidden", photos.length > 0 || allPhotos.length === 0);
     for (const photo of photos) {
-      const { file, path, caption, favorite } = photo; const card = document.createElement("article"); card.className = "photo-card reveal"; card.style.setProperty("--card-index", gallery.children.length);
+      const { file, path, caption, favorite } = photo; const card = document.createElement("article"); card.className = `photo-card reveal${selectedPaths.has(path) ? " selected" : ""}`; card.classList.toggle("selection-mode", selectionMode); card.style.setProperty("--card-index", gallery.children.length);
+      const select = document.createElement("button"); select.type = "button"; select.className = `photo-select${selectedPaths.has(path) ? " checked" : ""}`; select.setAttribute("aria-label", selectedPaths.has(path) ? "Batalkan pilihan foto" : "Pilih foto"); select.textContent = selectedPaths.has(path) ? "✓" : ""; select.onclick = () => toggleSelected(path);
       const image = document.createElement("img"); image.alt = caption || file.name; image.loading = "lazy"; image.decoding = "async"; image.dataset.path = path;
       const photoDate = file.created_at ? new Date(file.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "Kenangan";
       const meta = document.createElement("div"); meta.className = "photo-meta"; const date = document.createElement("span"); date.textContent = photoDate;
@@ -67,11 +74,24 @@
       const fav = document.createElement("button"); fav.type = "button"; fav.title = favorite ? "Hapus dari favorit" : "Tandai favorit"; fav.setAttribute("aria-label", fav.title); fav.textContent = favorite ? "♥" : "♡"; fav.className = favorite ? "is-favorite" : ""; fav.onclick = () => saveNote(path, { favorite: !favorite });
       const captionButton = document.createElement("button"); captionButton.type = "button"; captionButton.title = "Tambah/edit keterangan"; captionButton.setAttribute("aria-label", captionButton.title); captionButton.textContent = "✎"; captionButton.onclick = () => showDialog({ title: "Cerita di balik foto", description: "Simpan satu kalimat kecil agar momen ini selalu punya ceritanya.", label: "Keterangan foto", value: caption, confirm: "Simpan cerita", onConfirm: value => saveNote(path, { caption: value.trim() }) });
       const view = document.createElement("button"); view.type = "button"; view.title = "Lihat foto"; view.setAttribute("aria-label", view.title); view.textContent = "↗"; view.onclick = () => openAt(visiblePhotos.findIndex(p => p.path === path));
-      const del = document.createElement("button"); del.type = "button"; del.title = "Hapus foto"; del.setAttribute("aria-label", del.title); del.textContent = "×"; del.onclick = () => showDialog({ title: "Hapus foto ini?", description: "Foto akan dihapus dari album kalian dan tindakan ini tidak dapat dibatalkan.", label: "Ketik HAPUS untuk melanjutkan", value: "", confirm: "Hapus foto", destructive: true, onConfirm: async value => { if (value.trim().toUpperCase() !== "HAPUS") { $("dialog-description").textContent = "Ketik HAPUS dengan benar untuk mengonfirmasi penghapusan."; return false; } const { error: removeError } = await client.storage.from(cfg.bucket).remove([path]); if (removeError) { $("dialog-description").textContent = `Foto belum terhapus: ${removeError.message}`; return false; } await client.from("photo_notes").delete().eq("path", path); notice("Foto dihapus dari album."); await loadPhotos(); } });
+      const del = document.createElement("button"); del.type = "button"; del.title = "Hapus foto"; del.setAttribute("aria-label", del.title); del.textContent = "×"; del.onclick = () => showDialog({ title: "Hapus foto ini?", description: "Foto akan dihapus dari album kalian dan tindakan ini tidak dapat dibatalkan.", label: "Ketik HAPUS untuk melanjutkan", value: "", confirm: "Hapus foto", destructive: true, onConfirm: async value => { if (value.trim().toUpperCase() !== "HAPUS") { $("dialog-description").textContent = "Ketik HAPUS dengan benar untuk mengonfirmasi penghapusan."; return false; } const { error: removeError } = await client.storage.from(cfg.bucket).remove([path]); if (removeError) { $("dialog-description").textContent = `Foto belum terhapus: ${removeError.message}`; return false; } await client.storage.from(cfg.bucket).remove([`__thumbs/${path}.webp`]); await client.from("photo_notes").delete().eq("path", path); notice("Foto dihapus dari album."); await loadPhotos(); } });
       actions.append(fav, captionButton, view, del); meta.append(date, actions); const captionLine = document.createElement("p"); captionLine.className = "photo-caption-text"; captionLine.textContent = caption || "Tambah keterangan…"; captionLine.onclick = captionButton.onclick;
-      image.title = "Ketuk untuk melihat foto"; image.onclick = () => openAt(visiblePhotos.findIndex(p => p.path === path)); card.append(image, meta, captionLine); gallery.append(card); if (revealObserver) revealObserver.observe(card); else card.classList.add("is-visible");
+      image.title = selectionMode ? "Ketuk untuk memilih foto" : "Ketuk untuk melihat foto"; image.onclick = () => selectionMode ? toggleSelected(path) : openAt(visiblePhotos.findIndex(p => p.path === path)); card.append(select, image, meta, captionLine); gallery.append(card); if (revealObserver) revealObserver.observe(card); else card.classList.add("is-visible");
       if (photoObserver) photoObserver.observe(image); else loadThumbnail(image);
     }
+  }
+  async function deleteMany(paths, confirmation) {
+    if (confirmation.trim().toUpperCase() !== "HAPUS") { $("dialog-description").textContent = "Ketik HAPUS dengan benar untuk mengonfirmasi penghapusan."; return false; }
+    let deleted = 0;
+    for (let start = 0; start < paths.length; start += 50) {
+      const batch = paths.slice(start, start + 50); $("dialog-description").textContent = `Menghapus ${deleted} dari ${paths.length} foto…`;
+      const { error } = await client.storage.from(cfg.bucket).remove(batch);
+      if (error) { $("dialog-description").textContent = `Sebagian foto sudah dihapus (${deleted}). Gagal melanjutkan: ${error.message}`; if (deleted) { await client.from("photo_notes").delete().in("path", paths.slice(0, deleted)); await loadPhotos(); } return false; }
+      await client.storage.from(cfg.bucket).remove(batch.map(path => `__thumbs/${path}.webp`));
+      await client.from("photo_notes").delete().in("path", batch);
+      batch.forEach(path => selectedPaths.delete(path)); deleted += batch.length;
+    }
+    selectionMode = false; updateSelectionUI(); await loadPhotos(); notice(`${deleted} foto berhasil dihapus.`); return true;
   }
   async function saveNote(path, changes) {
     if (!client) return; const current = allPhotos.find(p => p.path === path); const updated = { path, caption: changes.caption ?? current.caption, favorite: changes.favorite ?? current.favorite };
@@ -96,5 +116,6 @@
   function closePhoto() { stopSlideshow(); photoRequestId++; $("lightbox").classList.add("hidden", "loading"); $("lightbox-loader").classList.add("hidden"); $("lightbox-img").src = ""; activePhoto = null; }
   $("lightbox-close").onclick = closePhoto; $("lightbox").onclick = e => { if (e.target === $("lightbox")) closePhoto(); }; window.addEventListener("resize", alignLightboxArrows); document.addEventListener("keydown", e => { if (e.key === "Escape") { closePhoto(); $("dialog-backdrop").classList.add("hidden"); return; } if ($("lightbox").classList.contains("hidden")) return; if (e.key === "ArrowLeft") openAt(activeIndex - 1); if (e.key === "ArrowRight") openAt(activeIndex + 1); });
 })();
+
 
 
