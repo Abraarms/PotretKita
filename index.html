@@ -43,10 +43,11 @@
   <footer><span>dibuat untuk cerita kita <b>♥</b></span><span>RUANG KITA · PRIVAT</span></footer>
   <input id="file-input" type="file" accept="image/*" multiple hidden>
   <input id="cover-input" type="file" accept="image/*" hidden>
-  <div id="lightbox" class="lightbox hidden"><button id="lightbox-close" class="lightbox-close" aria-label="Tutup">×</button><button id="lightbox-prev" class="lightbox-nav prev" aria-label="Foto sebelumnya">‹</button><img id="lightbox-img" alt="Foto kenangan"><button id="lightbox-next" class="lightbox-nav next" aria-label="Foto berikutnya">›</button><div id="lightbox-caption"></div><div class="lightbox-tools"><span id="lightbox-counter"></span><button id="lightbox-play" class="lightbox-play">▷ Mulai slideshow</button><a id="lightbox-download" download>Unduh foto ↓</a></div></div>
+  <div id="lightbox" class="lightbox hidden"><button id="lightbox-close" class="lightbox-close" aria-label="Tutup">×</button><button id="lightbox-prev" class="lightbox-nav prev" aria-label="Foto sebelumnya">‹</button><div id="lightbox-loader" class="lightbox-loader hidden"><span></span>Memuat foto…</div><div id="lightbox-loader" class="lightbox-loader hidden"><span></span>Memuat foto…</div><img id="lightbox-img" alt="Foto kenangan"><button id="lightbox-next" class="lightbox-nav next" aria-label="Foto berikutnya">›</button><div id="lightbox-caption"></div><div class="lightbox-tools"><span id="lightbox-counter"></span><button id="lightbox-play" class="lightbox-play">▷ Mulai slideshow</button><a id="lightbox-download" download>Unduh foto ↓</a></div></div>
   <div id="dialog-backdrop" class="dialog-backdrop hidden" role="presentation"><section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button id="dialog-x" class="dialog-x" aria-label="Tutup">×</button><div id="dialog-icon" class="dialog-icon">♡</div><h2 id="dialog-title">Keterangan foto</h2><p id="dialog-description">Tambahkan cerita kecil untuk momen ini.</p><form id="dialog-form"><label id="dialog-label" for="dialog-input">Keterangan</label><textarea id="dialog-input" maxlength="240" rows="3" placeholder="Tulis cerita singkat…"></textarea><div class="dialog-actions"><button type="button" id="dialog-cancel" class="dialog-cancel">Batal</button><button type="submit" id="dialog-confirm" class="primary">Simpan</button></div></form></section></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
+
