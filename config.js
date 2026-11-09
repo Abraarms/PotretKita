@@ -1,5 +1,4 @@
-// Isi nilai ini dari Supabase: Project Settings > API.
-// Jangan pernah menaruh service_role key di sini. Gunakan hanya anon/publishable key.
+// Kunci publishable memang dipakai di browser. Jangan masukkan service_role/secret key.
 window.APP_CONFIG = {
   supabaseUrl: "https://inokrrgghjbygupncjnc.supabase.co",
   supabaseAnonKey: "sb_publishable_eT3aYg4EHf7YrCL_NNXuVQ_jTxTbC2L",
