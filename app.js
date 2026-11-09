@@ -7,6 +7,7 @@
   let allPhotos = [], visiblePhotos = [], favoritesOnly = false, activePhoto = null, activeIndex = 0, slideTimer = null, slidePlaying = false, photoRequestId = 0;
   const signedUrlCache = new Map();
   const photoObserver = "IntersectionObserver" in window ? new IntersectionObserver(entries => { for (const entry of entries) { if (entry.isIntersecting) { photoObserver.unobserve(entry.target); loadThumbnail(entry.target); } } }, { rootMargin: "320px 0px" }) : null;
+  const revealObserver = "IntersectionObserver" in window ? new IntersectionObserver(entries => { for (const entry of entries) { if (entry.isIntersecting) { entry.target.classList.add("is-visible"); revealObserver.unobserve(entry.target); } } }, { threshold: .08, rootMargin: "0px 0px -35px 0px" }) : null;
   function notice(text, error = false) { const el = $("status"); el.textContent = text; el.className = `status ${text ? "show" : ""} ${error ? "error" : ""}`; }
   function loginNotice(text, error = false) { $("login-message").textContent = text; $("login-message").className = `message ${error ? "error" : ""}`; }
   function showSession(session) { const logged = Boolean(session); loginView.classList.toggle("hidden", logged); galleryView.classList.toggle("hidden", !logged); $("logout").classList.toggle("hidden", !logged); if (logged) loadPhotos(); }
@@ -40,14 +41,14 @@
     $("photo-count").textContent = `${files.length} foto`; renderPhotos(); if (!files.length) $("empty").classList.remove("hidden"); else $("empty").classList.add("hidden");
   }
   function renderPhotos() {
-    if (!gallery) return; photoObserver?.disconnect(); gallery.innerHTML = "";
+    if (!gallery) return; photoObserver?.disconnect(); revealObserver?.disconnect(); gallery.innerHTML = "";
     const query = $("search-input").value.trim().toLocaleLowerCase("id");
     let photos = allPhotos.filter(p => (!favoritesOnly || p.favorite) && (!query || `${p.file.name} ${p.caption}`.toLocaleLowerCase("id").includes(query)) && ($("month-filter").value === "all" || p.file.created_at?.slice(0,7) === $("month-filter").value));
     const sort = $("sort-select").value;
     if (sort === "oldest") photos.reverse(); else if (sort === "name") photos.sort((a,b) => a.file.name.localeCompare(b.file.name)); else if (sort === "favorites") photos.sort((a,b) => Number(b.favorite)-Number(a.favorite));
     visiblePhotos = photos; $("no-results").classList.toggle("hidden", photos.length > 0 || allPhotos.length === 0);
     for (const photo of photos) {
-      const { file, path, caption, favorite } = photo; const card = document.createElement("article"); card.className = "photo-card";
+      const { file, path, caption, favorite } = photo; const card = document.createElement("article"); card.className = "photo-card reveal"; card.style.setProperty("--card-index", gallery.children.length);
       const image = document.createElement("img"); image.alt = caption || file.name; image.loading = "lazy"; image.decoding = "async"; image.dataset.path = path;
       const photoDate = file.created_at ? new Date(file.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "Kenangan";
       const meta = document.createElement("div"); meta.className = "photo-meta"; const date = document.createElement("span"); date.textContent = photoDate;
@@ -57,7 +58,7 @@
       const view = document.createElement("button"); view.title = "Lihat foto"; view.textContent = "↗"; view.onclick = () => openAt(visiblePhotos.findIndex(p => p.path === path));
       const del = document.createElement("button"); del.title = "Hapus foto"; del.textContent = "×"; del.onclick = () => showDialog({ title: "Hapus foto ini?", description: "Foto akan dihapus dari album kalian dan tindakan ini tidak dapat dibatalkan.", label: "Ketik HAPUS untuk melanjutkan", value: "", confirm: "Hapus foto", destructive: true, onConfirm: async value => { if (value.trim().toUpperCase() !== "HAPUS") { $("dialog-description").textContent = "Ketik HAPUS dengan benar untuk mengonfirmasi penghapusan."; return false; } const { error: removeError } = await client.storage.from(cfg.bucket).remove([path]); if (removeError) { $("dialog-description").textContent = `Foto belum terhapus: ${removeError.message}`; return false; } await client.from("photo_notes").delete().eq("path", path); notice("Foto dihapus dari album."); await loadPhotos(); } });
       actions.append(fav, captionButton, view, del); meta.append(date, actions); const captionLine = document.createElement("p"); captionLine.className = "photo-caption-text"; captionLine.textContent = caption || "Tambah keterangan…"; captionLine.onclick = captionButton.onclick;
-      card.append(image, meta, captionLine); gallery.append(card);
+      card.append(image, meta, captionLine); gallery.append(card); if (revealObserver) revealObserver.observe(card); else card.classList.add("is-visible");
       if (photoObserver) photoObserver.observe(image); else loadThumbnail(image);
     }
   }
